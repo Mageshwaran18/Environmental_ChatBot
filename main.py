@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+import generic_helper
 
 # Carbon emission factors (in kgCO2 per km) for different transport modes
 carbon_emission_factors = {
