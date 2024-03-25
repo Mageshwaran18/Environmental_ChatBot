@@ -1,7 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import generic_helper
+import mysql.connector
 
+mydb = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="mahesh",
+    database="environment"
+)
 # Carbon emission factors (in kgCO2 per km) for different transport modes
 inprogress_orders={}
 
@@ -78,8 +85,25 @@ def calculate_for_car_or_bike(parameters : dict,session_id: str):
 
 def add_name(parameters: dict,session_id: str):
 
-    name = parameters["Name"]['name']
+    username = parameters["Name"]['name']
     print(session_id)
+    print("----------------")
+    print(username)
+    print("----------------")
     if session_id not in inprogress_orders:
-        inprogress_orders[session_id]=name
-    print(inprogress_orders)
+        inprogress_orders[session_id]=username
+    cursor = mydb.cursor()
+    cursor.execute("SELECT * FROM user_carbon_footprints WHERE username = %s", (username,))
+    existing_user = cursor.fetchone()
+    print(existing_user)
+
+    if existing_user:
+        # If the user exists, send a welcome back message
+        return JSONResponse(content={"fulfillmentText": f"Hai welcome back {username}"})
+    else:
+        # If the user doesn't exist, create a new entry and send a welcome message
+        with mydb.cursor() as cursor:
+            cursor.execute("INSERT INTO users (username) VALUES (%s)", (username,))
+            cursor.execute("INSERT INTO user_carbon_footprints (username, carbon_footprint, entry_date) VALUES (%s, %s, CURDATE())", (username, 0.0))
+            mydb.commit()
+        return JSONResponse(content={"fulfillmentText": f"It's a pleasure to meet a new friend in my community. Welcome {username}"})
