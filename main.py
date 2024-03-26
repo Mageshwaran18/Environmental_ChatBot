@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 import generic_helper
 import mysql.connector
 import random
+import requests
 
 mydb = mysql.connector.connect(
     host="localhost",
@@ -36,6 +37,8 @@ async def handle_request(request: Request):
         'Car_or_Bike--Calculate': calculate_for_car_or_bike,
         'After_User_Name':add_name,
         'Confirmation for Calculate': check,
+        'News':news,
+        'Weather_News':weather,
     }
 
     session_id = generic_helper.extract_session_id(output_contexts[0]['name'])
@@ -125,7 +128,7 @@ def add_name(parameters: dict,session_id: str):
         selected_message += "\n"
     
     # Concatenating the common static text with the selected message
-        full_message = f"{selected_message}Shall I calculate the carbon footprint or Do you need recycling guidelines for some material."
+        full_message = f"{selected_message}Shall I calculate the carbon footprint or Do you need recycling guidelines for some material or Latest Science News"
         # Formatting the selected message with the username
         formatted_message = full_message.format(name=username)
         
@@ -138,3 +141,56 @@ def add_name(parameters: dict,session_id: str):
             cursor.execute("INSERT INTO user_carbon_footprints (username, carbon_footprint, entry_date) VALUES (%s, %s, CURDATE())", (username, 0.0))
             mydb.commit()
         return JSONResponse(content={"fulfillmentText": f"It's a pleasure to meet a new friend in my community. Welcome {username} Shall we calculate the carbon footprint or Do you need recycling guidelines for some material."})
+    
+def news(parameters: dict,session_id: str):
+    api_key = 'c9635a15c4a64806b169099b2816fb04'
+    country = 'in'
+    category = 'science'
+    url = 'https://newsapi.org/v2/top-headlines'
+    params = {
+        'country': country,
+        'category': category,
+        'apiKey': api_key
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+    if data['status'] == 'ok':
+        articles = data['articles']
+        news_items = [article['title'] for article in articles]
+        
+        random_news = random.choice(news_items)
+        return JSONResponse(content={"fulfillmentText": random_news})
+    else:
+        error_message = data.get('message', 'Unknown error')
+        return JSONResponse(content={"fulfillmentText": f"Error fetching news: {error_message}"})
+    
+def weather(parameters: dict,session_id: str):
+        # Replace 'YOUR_API_KEY' with your actual WeatherAPI key
+    API_KEY = '3f14ccd416ab4d7cb80163732242503'
+    BASE_URL = 'https://api.weatherapi.com/v1/current.json'
+
+    # Specify the location for which you want to fetch weather data
+    if(parameters['geo-state']):
+        location = parameters['geo-state']
+    else:
+        location = parameters['geo-city']
+
+    # Make the API request
+    params = {
+        'key': API_KEY,
+        'q': location
+    }
+    response = requests.get(BASE_URL, params=params)
+
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        data = response.json()
+        # Extract relevant information from the response
+        location_name = data['location']['name']
+        current_temp_c = data['current']['temp_c']
+        condition = data['current']['condition']['text']
+        return JSONResponse({"fulfillmentText": f"The current temperature in {location_name} is around {current_temp_c}°C, and the condition is {condition}."})
+        
+    else:
+       return JSONResponse({f'Error fetching weather data: {response.status_code}'})
