@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import generic_helper
 import mysql.connector
+import random
 
 mydb = mysql.connector.connect(
     host="localhost",
@@ -31,10 +32,10 @@ async def handle_request(request: Request):
     output_contexts = payload['queryResult']['outputContexts']
 
     intent_handler_dict = {
-        'Calculate': calculate,
-        'Car_or_Bike': calculate_for_car_or_bike,
+        'Calculate--Calculate': calculate,
+        'Car_or_Bike--Calculate': calculate_for_car_or_bike,
         'After_User_Name':add_name,
-        'Confirmation': check,
+        'Confirmation for Calculate': check,
     }
 
     session_id = generic_helper.extract_session_id(output_contexts[0]['name'])
@@ -58,10 +59,16 @@ def calculate(parameters: dict,session_id: str):
         Distance = int(parameters["Distance"])
         TransportMode = parameters["TransportMode"].capitalize()
         carbon_emission = Distance * carbon_emission_factors.get(TransportMode, 0)
+        username = inprogress_orders[session_id]
+        cursor = mydb.cursor()
+        cursor.execute("UPDATE user_carbon_footprints SET carbon_footprint = %s,entry_date =CURDATE()  WHERE username = %s",
+                           (carbon_emission, username))
+        mydb.commit()
+        cursor.close()
         
-    return JSONResponse(content={
-        "fulfillmentText": f"Your carbon footprint for traveling {Distance} km by {TransportMode} is {carbon_emission:.2f} kgCO2."
-    })
+        return JSONResponse(content={
+            "fulfillmentText": f"Your carbon footprint for traveling {Distance} km by {TransportMode} is {carbon_emission:.2f} kgCO2."
+        })
 
 def calculate_for_car_or_bike(parameters : dict,session_id: str):
 
@@ -77,6 +84,13 @@ def calculate_for_car_or_bike(parameters : dict,session_id: str):
         fuel_efficiency = int(parameters["Efficiency"])
         
     carbon_emission = Distance * (1 / fuel_efficiency)
+    username = inprogress_orders[session_id]
+
+    with mydb.cursor() as cursor:
+        cursor.execute("UPDATE user_carbon_footprints SET carbon_footprint = %s,entry_date =CURDATE()  WHERE username = %s",
+                           (carbon_emission, username))
+        mydb.commit()
+        cursor.close()
     
     return JSONResponse(content={
         "fulfillmentText": f"Your carbon footprint for traveling {Distance} km by {Car_Bike} with an efficiency of {fuel_efficiency} km/l is {carbon_emission:.2f} kgCO2."
@@ -98,12 +112,29 @@ def add_name(parameters: dict,session_id: str):
     print(existing_user)
 
     if existing_user:
-        # If the user exists, send a welcome back message
-        return JSONResponse(content={"fulfillmentText": f"Hai welcome back {username}"})
+        welcome_messages = [
+            "Hey there {name}, what's on the agenda?",
+            "Hi, {name} any plans for now?",
+            "Hello {name}! What's next on our list?",
+            "Hi {name}! Ready for our next step? "
+        ]
+        
+        # Selecting a random welcome message
+        selected_message = random.choice(welcome_messages)
+        
+        selected_message += "\n"
+    
+    # Concatenating the common static text with the selected message
+        full_message = f"{selected_message}Shall I calculate the carbon footprint or Do you need recycling guidelines for some material."
+        # Formatting the selected message with the username
+        formatted_message = full_message.format(name=username)
+        
+        # Returning the JSON response
+        return JSONResponse(content={"fulfillmentText": formatted_message})
     else:
         # If the user doesn't exist, create a new entry and send a welcome message
         with mydb.cursor() as cursor:
             cursor.execute("INSERT INTO users (username) VALUES (%s)", (username,))
             cursor.execute("INSERT INTO user_carbon_footprints (username, carbon_footprint, entry_date) VALUES (%s, %s, CURDATE())", (username, 0.0))
             mydb.commit()
-        return JSONResponse(content={"fulfillmentText": f"It's a pleasure to meet a new friend in my community. Welcome {username}"})
+        return JSONResponse(content={"fulfillmentText": f"It's a pleasure to meet a new friend in my community. Welcome {username} Shall we calculate the carbon footprint or Do you need recycling guidelines for some material."})
