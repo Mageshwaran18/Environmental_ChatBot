@@ -1,0 +1,61 @@
+/* General styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('back.jpeg');
+    background-size: cover;
+    background-color: rgba(240, 240, 240, 0.8); /* Adjust opacity here (0.8 means 80% opacity) */
+    text-align: center;
+}
+
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.banner-img {
+    width: 40%;
+    height: auto;
+    margin-top: -50%;
+    margin-right: 20px;
+}
+
+.chat-bot {
+    width: 400px;
+    height: 550px;
+    border: none;
+    z-index: 1000;
+}
+
+.bot-img {
+    width: 50%;
+    height: auto;
+    margin-left: 20px;
+}
+
+.slogan {
+    color: lightgreen;
+    font-size: 24px;
+    margin-top: 20px;
+}
+
+.text-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ecofriendly {
+    color: lightblue;
+    font-size: 24px; /* Increased font size */
+}
+
+.chatfriendly {
+    color: lightblue;
+    font-size:  24px;
+    margin-top: 5px;
+}
