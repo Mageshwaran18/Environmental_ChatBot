@@ -3,7 +3,7 @@ body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    background-image: url('back.jpeg');
+    background-image: url('scripts/back.jpeg');
     background-size: cover;
     background-color: rgba(240, 240, 240, 0.8); /* Adjust opacity here (0.8 means 80% opacity) */
     text-align: center;
