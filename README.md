@@ -40,3 +40,26 @@ How to Use
 2. To run the Backend code use uvicorn main:app --reload
 3. To convert http to https , in the cmd direct to project and run command as ngrok http 8000
 4. Change the fullfillment link by ngrok generated link 
+
+How the DialogFlow works :-
+
+--> Dialogflow is a Google tool to build chatbots and voice assistants using NLP (Natural Language Processing).
+
+--> It understands user messages and replies using intents, entities, and responses.
+
+    Intent = action,
+    Entity = details,
+    Response = bot reply.
+
+--> Ex:-
+
+    Intent: What the user wants.
+    Example: "Book a flight"
+    
+    Entity: Important data in the message.
+    Example: "Delhi", "May 5" (city, date)
+    
+    Response: Bot’s reply.
+    Example: "Your flight to Delhi on May 5 is booked!"
+    
+    
